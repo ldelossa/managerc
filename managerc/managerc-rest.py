@@ -181,9 +181,15 @@ class TaskResource(object):
     def __init__(self, es_client):
         self.es_client = es_client
 
-    def on_get(self, req, resp):
+    def on_get(self, req, resp, id=None):
 
-        search_results = self.es_client.search(index=TASKS_INDEX, doc_type="task", body=QUERY_ALL)
+        # If ID is present query for task matching ID. We use a search here so the search results json
+        # is identical in both cases. (Opposed to using a get, which will break 'hits' code lower)
+        if id:
+            query = {"query": {"match": {"id": id}}}
+            search_results = self.es_client.search(index=TASKS_INDEX, doc_type="task", body=query)
+        else:
+            search_results = self.es_client.search(index=TASKS_INDEX, doc_type="task", body=QUERY_ALL)
 
         # If not hits, we have no tasks. Return a json message indicating this
         if search_results['hits']['total'] < 1:
@@ -236,6 +242,7 @@ def main():
     app.add_route('/ping', ping)
     app.add_route('/indexList', index_list)
     app.add_route('/tasks', tasks)
+    app.add_route('/tasks/{id}', tasks)
 
     return app
 

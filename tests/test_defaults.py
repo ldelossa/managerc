@@ -1,12 +1,11 @@
-from managerc import IndexListParamsException, IndexListParams
-import pytest
-from unittest.mock import Mock
-import elasticsearch
-import curator
-
-from falcon import testing
 import managerc.managerc_uwsgi
+import pytest
+import elasticsearch
+from falcon import testing
+from unittest.mock import Mock
+from managerc import IndexListParamsException, IndexListParams, TaskException, TaskDoc
 
+# fixture which simulates a web client
 @pytest.fixture()
 def client():
     return testing.TestClient(managerc.managerc_uwsgi.main())
@@ -36,23 +35,29 @@ class TestIndexList():
         assert ((i.format == "json") and (i.index == "Test") and (i.bytes == "k"))
 
     def test_get(self, monkeypatch, client, mock_es_cat_client):
+        # Create mock object in which when called returns our mock_es_cat_client mock
         ES = Mock(return_value=mock_es_cat_client)
+        # Via monkeypatch, replace CatClient with ES callable, thus returning our mock to the code in play
         monkeypatch.setattr('elasticsearch.client.CatClient', ES)
+        # Patch our cat_client mock to return specific value for testing
         mock_es_cat_client.indices.return_value = {"test": "ok"}
 
         # Simulate client no params
         result = client.simulate_get(path='/indexList')
         assert result.text == '{"test": "ok"}'
 
-        # Simulate client bad params
-        params = {"format": "not_supported"}
-        result = client.simulate_get(path='/indexList', params=params)
-        assert result.status_code == 400
-
         # Simulate client good params
         params = {"format": "json", "bytes": "k"}
         result = client.simulate_get(path='/indexList', params=params)
+        mock_es_cat_client.indices.assert_called()
+        assert result.text == '{"test": "ok"}'
         assert result.status_code == 200
+
+        # Simulate client bad params
+        params = {"format": "not_supported"}
+        result = client.simulate_get(path='/indexList', params=params)
+        mock_es_cat_client.indices.assert_called()
+        assert result.status_code == 400
 
 
 

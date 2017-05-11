@@ -1,9 +1,11 @@
-import falcon
-import elasticsearch
-import curator
+import sys
+sys.path.append("../")
+
 import json
 import uuid
-
+import elasticsearch
+import falcon
+from managerc.data import TaskDocData
 
 # Managerc specific indicies.
 TASKS_INDEX = "managerc-tasks"
@@ -132,32 +134,32 @@ class TaskDoc(object):
         self.interval = None
         self.time = None
         self.filter = None
+        self.task_doc_data = TaskDocData()
 
         # Check required top level keys are present
-        top_level_keys = ["type", "interval", "time", "filter", "id"]
         keys = list(POST_data.keys())
 
-        if not all((k in top_level_keys) for k in keys):
+        if not all((k in self.task_doc_data.valid_top_level_keys) for k in keys):
             raise TaskException(message="POST data is missing a required key(s).")
 
         # Check required filter keys are present
-        filter_keys = ["direction", "unit", "unit_count", "type"]
         keys = list(POST_data["filter"].keys())
 
-        if not all((k in filter_keys) for k in keys):
+        if not all((k in self.task_doc_data.valid_filter_keys) for k in keys):
             raise TaskException(message="POST data is missing required keys(s) in the filter object")
 
         # Check top level values are valid
         # TODO: filter time string once format decided
-        if (POST_data["type"] not in SUPPORTED_TASKS) \
-                or (POST_data["interval"] not in SUPPORTED_TASK_INTERVAL):
+        # TODO: filter ID string (UUID)
+        if (POST_data["type"] not in self.task_doc_data.supported_task_type) \
+                or (POST_data["interval"] not in self.task_doc_data.supported_task_interval):
             raise TaskException(message="Provided value unknown")
 
         # Check filter values are valid.
         filter = POST_data["filter"]
-        if (filter["type"] not in SUPPORTED_FILTER_TYPES) \
-                or (filter["direction"] not in SUPPORTED_FILTER_DIRECTIONS) \
-                or (filter["unit"] not in SUPPORTED_FILTER_UNITS) \
+        if (filter["type"] not in self.task_doc_data.supported_filter_type) \
+                or (filter["direction"] not in self.task_doc_data.supported_filter_direction) \
+                or (filter["unit"] not in self.task_doc_data.supported_filter_unit) \
                 or (not isinstance(filter["unit_count"], int)):
             raise TaskException(message="Provided value for filter unknown")
 
@@ -245,5 +247,7 @@ def main():
     app.add_route('/tasks/{id}', tasks)
 
     return app
+if __name__ == "__main__":
+    main()
 
 app = main()

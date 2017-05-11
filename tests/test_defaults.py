@@ -3,7 +3,7 @@ import pytest
 import elasticsearch
 from falcon import testing
 from unittest.mock import Mock
-from managerc import IndexListParamsException, IndexListParams, TaskException, TaskDoc
+from managerc import IndexListParamsException, IndexListParams, TaskException, TaskDoc, TaskDocData
 
 # fixture which simulates a web client
 @pytest.fixture()
@@ -59,5 +59,20 @@ class TestIndexList():
         mock_es_cat_client.indices.assert_called()
         assert result.status_code == 400
 
+class TestTask():
+
+    def test_task_doc_instatiation(self):
+
+        # Test with valid POST_data
+        task_doc_data = TaskDocData()
+        POST_data = task_doc_data.build_valid_random_data()
+        assert TaskDoc(POST_data)
+
+        # Test with invalid POST_data
+        task_doc_data = TaskDocData()
+        POST_data = task_doc_data.build_invalid_random_data()
+        print(POST_data)
+        with pytest.raises(TaskException):
+            TaskDoc(POST_data)
 
 

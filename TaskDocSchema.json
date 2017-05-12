@@ -1,0 +1,13 @@
+# Fake Json which expresses TaskDoc schema
+{
+  "id": "UUID",
+  "type": "close | forcemerge | delete",
+  "interval": "daily | monthly",
+  "time": "TBD",
+  "filter": {
+    "type": "age",
+    "direction": "older | younger",
+    "unit": "days",
+    "unit_count": "0"
+  }
+}

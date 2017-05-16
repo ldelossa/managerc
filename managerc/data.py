@@ -1,6 +1,7 @@
 from random import randint
 from datetime import datetime
 import uuid
+import time
 
 
 '''
@@ -8,7 +9,7 @@ Class used to hold data for TaskDoc. Methods can be used inside tests.
 '''
 class TaskDocData(object):
     def __init__(self):
-        self.valid_top_level_keys = ["type", "interval", "time", "filter", "id"]
+        self.valid_top_level_keys = ["type", "interval", "time", "filter"]
         self.valid_filter_keys = ["direction", "unit", "unit_count", "type"]
         self.supported_task_type = ["close", "forcemerge", "delete"]
         self.supported_task_interval = ["daily", "monthly"]
@@ -18,8 +19,7 @@ class TaskDocData(object):
 
     def build_valid_random_data(self):
         data = {}
-        data["time"] = str(datetime.now())
-        data["id"] = str(uuid.uuid1())
+        data["time"] = time.strftime('%H:%M:%S')
         random_index = randint(0,100) % len(self.supported_task_type)
         data["type"] =  self.supported_task_type[random_index]
         random_index = randint(0,100) % len(self.supported_task_interval)

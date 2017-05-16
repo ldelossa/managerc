@@ -5,6 +5,7 @@ import json
 import uuid
 import elasticsearch
 import falcon
+import time
 from managerc.data import TaskDocData
 
 # Managerc specific indicies.
@@ -149,11 +150,15 @@ class TaskDoc(object):
             raise TaskException(message="POST data is missing required keys(s) in the filter object")
 
         # Check top level values are valid
-        # TODO: filter time string once format decided
-        # TODO: filter ID string (UUID)
         if (POST_data["type"] not in self.task_doc_data.supported_task_type) \
                 or (POST_data["interval"] not in self.task_doc_data.supported_task_interval):
             raise TaskException(message="Provided value unknown")
+
+        # Check time format
+        try:
+            time.strptime(POST_data["time"], '%H:%M:%S')
+        except:
+            raise TaskException(message="Specified time format incorrect. '%H:%M:%S")
 
         # Check filter values are valid.
         filter = POST_data["filter"]

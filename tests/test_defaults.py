@@ -74,5 +74,3 @@ class TestTask():
         print(POST_data)
         with pytest.raises(TaskException):
             TaskDoc(POST_data)
-
-

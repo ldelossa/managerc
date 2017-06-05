@@ -16,16 +16,17 @@ LOGS_INDEX = "managerc-logs"
 QUERY_ALL = {"query": {"match_all": {}}}
 
 # Supported values for json input to service. This is used mostly for json validation.
-SUPPORTED_TASKS = ('close', 'forcemerge', 'delete')
+SUPPORTED_TASKS = ('close', 'forcemerge', 'deleteindices')
 SUPPORTED_TASK_INTERVAL = ('daily', 'monthly')
-SUPPORTED_FILTER_TYPES = ('age',)
+SUPPORTED_FILTER_TYPES = ('filter_by_age',)
 SUPPORTED_FILTER_DIRECTIONS = ('older', 'younger')
 SUPPORTED_FILTER_UNITS = ('days',)
-
 
 '''
 Hooks
 '''
+
+
 def validate_task_index(req, resp, resource, params):
     '''
     Used as a hook, will validate necessary indices exist in ES before performing action
@@ -45,12 +46,14 @@ def validate_task_index(req, resp, resource, params):
 '''
 Resources
 '''
+
+
 class PingResource(object):
     def on_get(self, req, resp):
         resp.status = falcon.HTTP_200
         resp.body = ('Healthy')
 
-
+# IndexList
 class IndexListParamsException(Exception):
     def __init__(self, message):
         self.message = message
@@ -62,13 +65,14 @@ class IndexListParams(object):
     Once instantiated you can pass object.__dict__ to the cat API and 
     be sure that the parameters we are passing are sanitized. 
     '''
+
     def __init__(self, format="json", index=None, bytes="k", **kwargs):
 
         if not any(format == key for key in ["json", "yaml", None]):
             raise IndexListParamsException(message="Bad format value provided: {}".format(format))
         self.format = format
 
-        if not any(bytes == key for key in [ "b", "k", "m", "g", None]):
+        if not any(bytes == key for key in ["b", "k", "m", "g", None]):
             raise IndexListParamsException(message="Bad bytes value provided: {}".format(bytes))
         self.bytes = bytes
 
@@ -80,6 +84,7 @@ class IndexListResource(object):
     IndexListResource is a falcon resource for viewing ElasticSearch indicies. Used as a reference for creating
     jobs. 
     '''
+
     def __init__(self, es_client):
         self.es_client = es_client
 
@@ -99,6 +104,7 @@ class IndexListResource(object):
         resp.body = results
 
 
+# Tasks
 class TaskException(Exception):
     def __init__(self, message):
         self.message = message
@@ -110,6 +116,7 @@ class TaskDoc(object):
     Task document was created. This class can be used with the __dict__ meta field, passing a dictionary 
     representation of the class to the ElasticSearch client. 
     '''
+
     def __init__(self, POST_data):
         '''
         Init validates POST data provided by the client along with generating a unique ID for this document. 
@@ -130,28 +137,31 @@ class TaskDoc(object):
         }
         
         '''
+
+        # Generated in this function, not passed int
         self.id = None
+        self.last_ran = None
+
         self.type = None
         self.interval = None
         self.time = None
         self.filter = None
-        self.task_doc_data = TaskDocData()
 
         # Check required top level keys are present
         keys = list(POST_data.keys())
 
-        if not all((k in self.task_doc_data.valid_top_level_keys) for k in keys):
+        if not all((k in TaskDocData.valid_top_level_keys) for k in keys):
             raise TaskException(message="POST data is missing a required key(s).")
 
         # Check required filter keys are present
         keys = list(POST_data["filter"].keys())
 
-        if not all((k in self.task_doc_data.valid_filter_keys) for k in keys):
+        if not all((k in TaskDocData.valid_filter_keys) for k in keys):
             raise TaskException(message="POST data is missing required keys(s) in the filter object")
 
         # Check top level values are valid
-        if (POST_data["type"] not in self.task_doc_data.supported_task_type) \
-                or (POST_data["interval"] not in self.task_doc_data.supported_task_interval):
+        if (POST_data["type"] not in TaskDocData.supported_task_type) \
+                or (POST_data["interval"] not in TaskDocData.supported_task_interval):
             raise TaskException(message="Provided value unknown")
 
         # Check time format
@@ -162,14 +172,14 @@ class TaskDoc(object):
 
         # Check filter values are valid.
         filter = POST_data["filter"]
-        if (filter["type"] not in self.task_doc_data.supported_filter_type) \
-                or (filter["direction"] not in self.task_doc_data.supported_filter_direction) \
-                or (filter["unit"] not in self.task_doc_data.supported_filter_unit) \
+        if (filter["type"] not in TaskDocData.supported_filter_type) \
+                or (filter["direction"] not in TaskDocData.supported_filter_direction) \
+                or (filter["unit"] not in TaskDocData.supported_filter_unit) \
                 or (not isinstance(filter["unit_count"], int)):
             raise TaskException(message="Provided value for filter unknown")
 
         # Generate ID
-        id = uuid.uuid1()
+        id = str(uuid.uuid1())
 
         # Schema is validated, populate class object.
         self.id = id
@@ -205,7 +215,7 @@ class TaskResource(object):
             return
 
         # Send back array of source documents which define tasks.
-        docs = [ h['_source'] for h in search_results['hits']['hits'] ]
+        docs = [h['_source'] for h in search_results['hits']['hits']]
         results = json.dumps(docs)
 
         resp.body = results
@@ -228,9 +238,12 @@ class TaskResource(object):
 
         # Send validated document to managerc-tasks
         try:
-            self.es_client.index(index=TASKS_INDEX, doc_type="task", body=doc.__dict__, id=id)
+            self.es_client.index(index=TASKS_INDEX, doc_type="task", body=doc.__dict__, id=doc.id)
         except:
             raise falcon.HTTPInternalServerError(description=e.message)
+
+        resp_body = json.dumps({"id": doc.id, "status": "success"})
+        resp.body = resp_body
 
 
 def main():
@@ -252,6 +265,8 @@ def main():
     app.add_route('/tasks/{id}', tasks)
 
     return app
+
+
 if __name__ == "__main__":
     main()
 

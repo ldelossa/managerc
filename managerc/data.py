@@ -8,14 +8,13 @@ import time
 Class used to hold data for TaskDoc. Methods can be used inside tests. 
 '''
 class TaskDocData(object):
-    def __init__(self):
-        self.valid_top_level_keys = ["type", "interval", "time", "filter"]
-        self.valid_filter_keys = ["direction", "unit", "unit_count", "type"]
-        self.supported_task_type = ["close", "forcemerge", "delete"]
-        self.supported_task_interval = ["daily", "monthly"]
-        self.supported_filter_type = ["age"]
-        self.supported_filter_direction = ["older", "younger"]
-        self.supported_filter_unit = ["days"]
+    valid_top_level_keys = ["type", "interval", "time", "filter"]
+    valid_filter_keys = ["direction", "unit", "unit_count", "type"]
+    supported_task_type = ["close", "forcemerge", "deleteindices"]
+    supported_task_interval = ["daily", "monthly"]
+    supported_filter_type = ["filter_by_age",]
+    supported_filter_direction = ["older", "younger"]
+    supported_filter_unit = ["days"]
 
     def build_valid_random_data(self):
         data = {}

@@ -33,21 +33,29 @@ class ManagerC():
 
         # Get current time
         current_time = datetime.utcnow()
-        #TODO: Fix this: Hardcoded string will break if day is provided for monthly interval
+        print("Current Time: {}".format(current_time))
+
+        # TODO: Fix this: Hardcoded string will break if day is provided for monthly interval
         target_time = datetime.strptime(task["time"], "%H:%M:%S")
         target_time = target_time.replace(day=current_time.day, year=current_time.year, month=current_time.month)
+        print("Target Time: {}".format(target_time))
 
         # If task has been ran...
         if task["last_ran"]:
             last_ran = datetime.strptime(task["last_ran"], "%d:%H:%M:%S")
+            print("Last Ran: {}".format(target_time))
 
-            # We ran the task at or after our target_time on current day
-            if (last_ran.day == current_time.day) and last_ran >= target_time:
+            # We ran this task today already.
+            print(last_ran.day, current_time.day)
+            if last_ran.day == current_time.day:
                 return False
 
-            # last_ran is in the past, if current_time is >= target_time, run task.
-            elif current_time >= target_time:
+            # We do not run task today, should we?
+            if current_time >= target_time:
                 return True
+
+            # Task did not run today, but target_time > current_time
+            return False
 
         # Task has never been ran before, should we?
         if current_time >= target_time:
@@ -55,16 +63,17 @@ class ManagerC():
 
         return False
 
-    def run(self):
+    def start(self):
 
         while True:
 
             # Get tasks from ES:
-            docs = self._get_tasks()
+            tasks = self._get_tasks()
 
-            # Should we run any docs?
-            for doc in docs:
-                print(self._should_run_task(doc))
+            # Get list of runnable tasks
+            runnables = [task for task in tasks if self._should_run_task(task)]
+
+            # Run curator tasks (implement multiprocessing here)
 
             # Sleep
             time.sleep(.5)
@@ -75,7 +84,7 @@ if __name__ == "__main__":
 
     # New Manager
     m = ManagerC(es)
-    m.run()
+    m.start()
 
 
 

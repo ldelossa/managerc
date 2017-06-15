@@ -3,3 +3,4 @@ from managerc.managerc_uwsgi import IndexListParams
 from managerc.managerc_uwsgi import TaskException
 from managerc.managerc_uwsgi import TaskDoc
 from managerc.data import TaskDocData
+from managerc.managerc_daemon import ManagerC

@@ -63,16 +63,17 @@ class ManagerC():
 
         return False
 
-    def run(self):
+    def start(self):
 
         while True:
 
             # Get tasks from ES:
-            docs = self._get_tasks()
+            tasks = self._get_tasks()
 
-            # Should we run any docs?
-            for doc in docs:
-                print(self._should_run_task(doc))
+            # Get list of runnable tasks
+            runnables = [task for task in tasks if self._should_run_task(task)]
+
+            # Run curator tasks (implement multiprocessing here)
 
             # Sleep
             time.sleep(.5)
@@ -83,7 +84,7 @@ if __name__ == "__main__":
 
     # New Manager
     m = ManagerC(es)
-    m.run()
+    m.start()
 
 
 

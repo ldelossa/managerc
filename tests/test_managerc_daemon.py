@@ -11,7 +11,7 @@ def mock_task():
 
 class TestManagerC():
 
-    def test_should_run_task(self, monkeypatch, mock_task):
+    def test_should_run_task(self, mock_task):
 
         current_time = datetime.datetime(year=2017, month=5,
                                          day=5, hour=12, minute=00,

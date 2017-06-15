@@ -1,5 +1,6 @@
 import elasticsearch
 import curator
+from curator.actions import ForceMerge
 from datetime import datetime, timedelta
 import time
 
@@ -17,6 +18,13 @@ class ManagerCException(Exception):
 class ManagerC():
     def __init__(self, es_client):
         self.es_client = es_client
+        self.ilo = curator.IndexList()
+        self.actions_map = {
+            "forcemerge": ForceMerge
+        }
+        self.filters_map = {
+            "filter_by_age": self.ilo.filter_by_age
+        }
 
     def _get_tasks(self):
 
@@ -62,6 +70,28 @@ class ManagerC():
             return True
 
         return False
+
+    def run_task(self, task):
+        # Create IndexList for duration of this function call.
+        # Requires this function to always be accessed synchronously.
+        self.ilo = curator.IndexList()
+
+        # Find task type and lookup in actions_map
+        try:
+            action = self.actions_map[task["type"]]
+        except LookupError:
+            print("Could not find type mapping")
+            return
+
+        # Find filters in filter map
+        for filter in task["filters"]:
+
+            try:
+                filter_func = self.filters_map[filter["type"]]
+                # filter out type from filter
+                params = {k: filter[k] for k in filter if k != "type"}
+
+
 
     def start(self):
 

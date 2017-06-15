@@ -4,11 +4,11 @@
   "type": "close | forcemerge | deleteindices",
   "interval": "daily | monthly",
   "time": "Dependend on interval",
-  "filter": {
+  "filters": [{
     "type": "filter_by_age",
     "direction": "older | younger",
     "unit": "days",
     "unit_count": "0"
-  }
+  }],
   "last_ran": "%d:%H:%M:%S"
 }

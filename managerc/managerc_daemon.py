@@ -15,16 +15,28 @@ class ManagerCException(Exception):
     def __init__(self, message):
         self.message = message
 
-class ManagerC():
+class ManagerC(object):
     def __init__(self, es_client):
         self.es_client = es_client
-        self.ilo = curator.IndexList(self.es_client)
+        self._ilo = None
         self.actions_map = {
             "forcemerge": ForceMerge
         }
-        self.filters_map = {
-            "filter_by_age": self.ilo.filter_by_age
-        }
+        # This will be populated via the ILO setter.
+        self.filters_map = {}
+
+    @property
+    def ilo(self):
+        return self._ilo
+
+    @ilo.setter
+    def ilo(self, i):
+        # Set self.ilo to passed in ilo instance
+        self._ilo = i
+
+        # update filter maps to reflect current instance of IndexList
+        self.filters_map["filter_by_age"] = self._ilo.filter_by_age
+
 
     def _get_tasks(self):
 
@@ -89,8 +101,8 @@ class ManagerC():
             filter_func = self.filters_map[filter["type"]]
             # filter out type from filter
             params = {k: filter[k] for k in filter if k != "type"}
-            print(filter_func, self.ilo.filter_by_age)
-            filter_func(**params)
+            print(filter_func == self.ilo.filter_by_age)
+            #filter_func(**params)
 
         #action = action(self.ilo)
         #action.do_action()
@@ -100,7 +112,7 @@ class ManagerC():
         while True:
 
             # Get tasks from ES:
-            tasks = self._get_tasks()
+            #tasks = self._get_tasks()
 
             # Get list of runnable tasks
             runnables = [task for task in tasks if self._should_run_task(task)]

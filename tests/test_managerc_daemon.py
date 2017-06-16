@@ -64,7 +64,7 @@ class TestManagerC():
 
     def test_run_task(self):
 
-        e = elasticsearch.Elasticsearch()
+        e = elasticsearch.Elasticsearch(hosts=["localhost"])
         m = ManagerC(es_client=e)
 
         task = {"type": "forcemerge", "filters": [{"type": "filter_by_age",

@@ -1,4 +1,5 @@
 from unittest.mock import Mock
+import elasticsearch
 import pytest
 import datetime
 import freezegun
@@ -18,7 +19,8 @@ class TestManagerC():
                                          second=00)
 
         with freezegun.freeze_time(current_time):
-            m = ManagerC(es_client=None)
+            e = elasticsearch.Elasticsearch()
+            m = ManagerC(es_client=e)
 
             # Test: Tasks has never been ran, current_time < target_time.
             # Assert False
@@ -59,3 +61,19 @@ class TestManagerC():
             mock_task.time = "11:59:00"
             result = m._should_run_task(mock_task.__dict__)
             assert result is True
+
+    def test_run_task(self):
+
+        e = elasticsearch.Elasticsearch()
+        m = ManagerC(es_client=e)
+
+        task = {"type": "forcemerge", "filters": [{"type": "filter_by_age",
+                                                   "source": "creation_date",
+                                                   "direction": "older",
+                                                   "unit": "days",
+                                                   "unit_count": 2,
+                                                   }]}
+
+        m._run_task(task)
+
+        assert False

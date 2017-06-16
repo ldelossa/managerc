@@ -18,7 +18,7 @@ class ManagerCException(Exception):
 class ManagerC():
     def __init__(self, es_client):
         self.es_client = es_client
-        self.ilo = curator.IndexList()
+        self.ilo = curator.IndexList(self.es_client)
         self.actions_map = {
             "forcemerge": ForceMerge
         }
@@ -71,10 +71,10 @@ class ManagerC():
 
         return False
 
-    def run_task(self, task):
+    def _run_task(self, task):
         # Create IndexList for duration of this function call.
         # Requires this function to always be accessed synchronously.
-        self.ilo = curator.IndexList()
+        self.ilo = curator.IndexList(self.es_client)
 
         # Find task type and lookup in actions_map
         try:
@@ -86,12 +86,14 @@ class ManagerC():
         # Find filters in filter map
         for filter in task["filters"]:
 
-            try:
-                filter_func = self.filters_map[filter["type"]]
-                # filter out type from filter
-                params = {k: filter[k] for k in filter if k != "type"}
+            filter_func = self.filters_map[filter["type"]]
+            # filter out type from filter
+            params = {k: filter[k] for k in filter if k != "type"}
+            print(filter_func, self.ilo.filter_by_age)
+            filter_func(**params)
 
-
+        #action = action(self.ilo)
+        #action.do_action()
 
     def start(self):
 
@@ -108,13 +110,13 @@ class ManagerC():
             # Sleep
             time.sleep(.5)
 
-if __name__ == "__main__":
-    # ES Client
-    es = elasticsearch.Elasticsearch(hosts=["localhost"])
-
-    # New Manager
-    m = ManagerC(es)
-    m.start()
+# if __name__ == "__main__":
+#     # ES Client
+#     es = elasticsearch.Elasticsearch(hosts=["localhost"])
+#
+#     # New Manager
+#     m = ManagerC(es)
+#     m.start()
 
 
 

@@ -1,0 +1,16 @@
+{
+  "id": "0f25622c-5310-11e7-add7-784f436507cf",
+  "type": "forcemerge",
+  "options": {
+    "max_num_segments": 1
+  },
+  "interval": "daily",
+  "time": "02:00:00",
+  "filters": [{
+    "source": "creation_date",
+    "type": "filter_by_age",
+    "direction": "older",
+    "unit": "days",
+    "unit_count": 0
+  }]
+}

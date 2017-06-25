@@ -11,6 +11,7 @@ class TaskDocData(object):
     valid_top_level_keys = ["type", "interval", "time", "filter"]
     valid_filter_keys = ["direction", "unit", "unit_count", "type"]
     supported_task_type = ["close", "forcemerge", "deleteindices"]
+    supported_task_options = {"forcemerge": ["max_num_segments"]}
     supported_task_interval = ["daily", "monthly"]
     supported_filter_type = ["filter_by_age",]
     supported_filter_direction = ["older", "younger"]
@@ -23,6 +24,17 @@ class TaskDocData(object):
         data["type"] =  self.supported_task_type[random_index]
         random_index = randint(0,100) % len(self.supported_task_interval)
         data["interval"] = self.supported_task_interval[random_index]
+
+        # Build Options
+        if data["type"] in self.supported_task_options.keys():
+            options = {}
+            random_index = randint(0,100) % len(self.supported_task_options[data["type"]])
+            option = self.supported_task_options[data["type"]][random_index]
+            option = { option: None }
+            data["options"] = option
+
+        # Build Filter
+        filters = []
         filter = {}
         random_index = randint(0,100) % len(self.supported_filter_type)
         filter["type"] = self.supported_filter_type[random_index]
@@ -31,7 +43,8 @@ class TaskDocData(object):
         random_index = randint(0,100) % len(self.supported_filter_unit)
         filter["unit"] = self.supported_filter_unit[random_index]
         filter["unit_count"] = randint(0,50)
-        data["filter"] = filter
+        filters.append(filter)
+        data["filters"] = filters
 
         return data
 
@@ -54,4 +67,6 @@ class TaskDocData(object):
         data[random_key] = "unsupported"
         return data
 
-
+if __name__ == '__main__':
+    t = TaskDocData()
+    print(t.build_valid_random_data())
